@@ -2,6 +2,7 @@ import sys
 import os
 import time
 import base64
+import autopep8
 
 def compile():
     file = sys.argv[2]
@@ -77,9 +78,12 @@ def compile():
                 # ~ Function Calls
                 if line.startswith("def"):
                     func_name = line.split(" ")[1]
-                    if func_name in functions:
+                    args = line[line.index("(") + 1:line.index(")")]
+                    _func_name = func_name[:func_name.find("(")]
+
+                    if _func_name in functions:
                         print(
-                            "jspcompiler: ~ Function already declared: " + func_name)
+                            "jspcompiler: ~ Function already declared: " + _func_name)
                         sys.exit(1)
 
                     func_body = ""
@@ -89,19 +93,32 @@ def compile():
                             break
 
                         _data = check(line.strip(), "")
-                        func_body += "\t"+_data
 
-                    functions.append(func_name.strip())
-                    stack += "def {0}():\n{1}".format(func_name.strip(), func_body)
+                        if not _data.startswith("\n"):
+                            func_body += "\t" + _data + "\n"
+                        else:
+                            func_body += ""+_data
+
+                    functions.append(_func_name)
+
+                    func_body = str(autopep8.fix_code(func_body, options={
+                        'aggressive': 1, 'indent_size': 4, 'max_line_length': 120}))
+
+                    func_body = func_body.replace("\n", "\n\t")
+
+                    stack += "def {0}({2}):\n{1}\n".format(_func_name.strip(), func_body, args.strip())
 
                 if line.startswith("call"):
                     function_name = line.split(" ")[1].strip()
+                    args = line[line.index("(") + 1:line.index(")")]
+                    function_name = function_name[:function_name.find("(")]
+
                     if function_name not in functions:
                         print("jspcompiler: ~ Function not declared:" +
-                              function_name)
+                        function_name)
                         sys.exit(1)
 
-                    stack += "{0}()\n".format(function_name)
+                    stack += "{0}({1})\n".format(function_name, args.strip())
 
                 if line.startswith("stop"):
                     pass
@@ -140,6 +157,8 @@ def compile():
                 return stack
 
             stack = check(line, stack)
+
+        print("jspcompiler: ~ Checking indentation...")
 
         print("jspcompiler: ~ Compiling " + file + "...")
         encoded = base64.b64encode(stack.encode()).decode()
