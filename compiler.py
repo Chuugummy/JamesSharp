@@ -16,6 +16,7 @@ def compile():
         return
 
     start_time = time.time()
+
     print("jspcompiler: ~ Parsing file...")
 
     with open(file, "r") as f:
@@ -106,7 +107,8 @@ def compile():
 
                     func_body = func_body.replace("\n", "\n\t")
 
-                    stack += "def {0}({2}):\n{1}\n".format(_func_name.strip(), func_body, args.strip())
+                    stack += "def {0}({2}):\n{1}\n".format(_func_name.strip(),
+                                                           func_body, args.strip())
 
                 if line.startswith("call"):
                     function_name = line.split(" ")[1].strip()
@@ -115,7 +117,7 @@ def compile():
 
                     if function_name not in functions:
                         print("jspcompiler: ~ Function not declared:" +
-                        function_name)
+                              function_name)
                         sys.exit(1)
 
                     stack += "{0}({1})\n".format(function_name, args.strip())
@@ -168,6 +170,8 @@ def compile():
 
         print("jspcompiler: ~ Compiled in {0} seconds".format(
             time.time() - start_time))
+
+        sys.exit(0)
 
 def run():
     file = sys.argv[2]
